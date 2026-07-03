@@ -4,7 +4,7 @@ File that contains the urls of the user app.
 
 from django.urls import path
 
-from django_apps.user.views import UserCreateView, UserListView # UserDetailView
+from django_apps.user.views import UserCreateView, UserListView  # UserDetailView
 
 APP_NAME = "user"
 

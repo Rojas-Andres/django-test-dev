@@ -45,63 +45,6 @@ Parameters:
 
 Resources:
 
-  IngressAPILogTable:
-    Type: "AWS::DynamoDB::Table"
-    Properties:
-      TableName: !Sub "${StackName}-${Environment}-IngressAPILogTable"
-      AttributeDefinitions:
-        - AttributeName: "service_name"
-          AttributeType: "S"
-        - AttributeName: "timestamp"
-          AttributeType: "S"
-        - AttributeName: "http_method"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "service_name"
-          KeyType: "HASH"
-        - AttributeName: "timestamp"
-          KeyType: "RANGE"
-      GlobalSecondaryIndexes:
-        - IndexName: "HttpMethodIndex"
-          KeySchema:
-            - AttributeName: "http_method"
-              KeyType: "HASH"
-          Projection:
-            ProjectionType: "ALL"
-      BillingMode: PAY_PER_REQUEST
-      Tags:
-        - Key: "Environment"
-          Value: !Ref Environment
-
-  EgressAPILogTable:
-    Type: "AWS::DynamoDB::Table"
-    Properties:
-      TableName: !Sub "${StackName}-${Environment}-EgressAPILogTable"
-      AttributeDefinitions:
-        - AttributeName: "service_name"
-          AttributeType: "S"
-        - AttributeName: "timestamp"
-          AttributeType: "S"
-        - AttributeName: "http_method"
-          AttributeType: "S"
-      KeySchema:
-        - AttributeName: "service_name"
-          KeyType: "HASH"
-        - AttributeName: "timestamp"
-          KeyType: "RANGE"
-      GlobalSecondaryIndexes:
-        - IndexName: "HttpMethodIndex"
-          KeySchema:
-            - AttributeName: "http_method"
-              KeyType: "HASH"
-          Projection:
-            ProjectionType: "ALL"
-      BillingMode: PAY_PER_REQUEST
-      Tags:
-        - Key: "Environment"
-          Value: !Ref Environment
-
-
   BucketS3InputDataAssets:
     Type: AWS::S3::Bucket
     Properties:
@@ -220,13 +163,6 @@ Resources:
                   - sqs:ReceiveMessage
                   - sqs:DeleteMessage
                   - sqs:GetQueueAttributes
-                  - dynamodb:CreateTable
-                  - dynamodb:PutItem
-                  - dynamodb:DescribeTable
-                  - dynamodb:DeleteItem
-                  - dynamodb:GetItem
-                  - dynamodb:Scan
-                  - dynamodb:UpdateItem
                 Resource: "*"
 
   SecurityGroup:
@@ -321,10 +257,6 @@ Resources:
               Value: !Sub "https://${DistributionBucketIDP.DomainName}"
             - Name: BUCKET_NAME
               Value: !Sub "${BucketName}-s3-assets-${Environment}"
-            - Name: DYNAMODB_INGRESS_API_LOG_TABLE_NAME
-              Value: !Ref IngressAPILogTable
-            - Name: DYNAMODB_EGRESS_API_LOG_TABLE_NAME
-              Value: !Ref EgressAPILogTable
 
   TargetGroupDjango:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup

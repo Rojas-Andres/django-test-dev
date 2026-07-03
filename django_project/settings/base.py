@@ -32,6 +32,7 @@ BASE_APPS = [
 LOCAL_APPS = [
     "django_apps.core",
     "django_apps.user",
+    "django_apps.task",
 ]
 
 THIRD_APPS = [
@@ -194,3 +195,6 @@ CACHEOPS_ENABLED = bool(int(getenv("CACHEOPS_ENABLED", "1")))
 CACHEOPS_REDIS = f"redis://{REDIS_HOSTNAME}:{REDIS_PORT}/0"
 
 DEFAULT_PAGE_SIZE = 10
+
+# Default time window (in days) used by the "upcoming tasks" endpoint.
+TASK_UPCOMING_DEFAULT_DAYS = int(getenv("TASK_UPCOMING_DEFAULT_DAYS", "7"))

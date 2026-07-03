@@ -74,10 +74,12 @@ class UserCreateView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
         """
         input_serializer = self.InputPostSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
-        _user = CreateUser(uow=UserUnitOfWork()).create(**input_serializer.validated_data)
+        _user = CreateUser(uow=UserUnitOfWork()).create(
+            **input_serializer.validated_data
+        )
         serialize = self.OutputPostSerializer(data=_user)
         serialize.is_valid(raise_exception=True)
-        return Response(data=serialize.data,status=status.HTTP_201_CREATED)
+        return Response(data=serialize.data, status=status.HTTP_201_CREATED)
 
 
 @GenerateSwagger(swagger_auto_schema)

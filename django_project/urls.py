@@ -25,6 +25,7 @@ schema_view = get_schema_view(
 urlpatterns = [
     path("", HealtCheck.as_view(), name="healtcheck"),
     path("api/user/", include("django_apps.user.urls")),
+    path("api/task/", include("django_apps.task.urls")),
     re_path(
         r"^swagger(?P<format>\.json|\.yaml)$",
         schema_view.without_ui(cache_timeout=0),

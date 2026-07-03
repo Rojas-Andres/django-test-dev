@@ -29,7 +29,7 @@ def import_string(dotted_path: str) -> Callable:
         return _cached_import(module_path, class_name)
     except AttributeError as err:
         raise ImportError(
-            f"Module {module_path} does not define a " f"{class_name} attribute/class"
+            f"Module {module_path} does not define a {class_name} attribute/class"
         ) from err
 
 

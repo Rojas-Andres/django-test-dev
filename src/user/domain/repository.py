@@ -20,6 +20,7 @@ class AbstractUserRepository(ABC):
     def to_dict(self, user: models.User) -> dict:
         raise NotImplementedError
 
+
 class AbstractUserUnitOfWork(AbstractUnitOfWork):
     def __enter__(self):
         self.users: AbstractUserRepository

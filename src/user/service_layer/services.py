@@ -36,4 +36,3 @@ class CreateUser:
             )
             self.uow.commit()
             return self.uow.users.to_dict(user)
-
