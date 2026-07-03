@@ -1,0 +1,43 @@
+FROM python:3.10-slim-buster as intermediate
+
+ARG PYPI_USER
+ARG PYPI_PASSWORD
+
+FROM python:3.10-slim-buster
+
+ENV PYTHONUNBUFFERED=1
+
+ENV PYTHONDONTWRITEBYTECODE=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq-dev \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    libcurl4-openssl-dev \
+    netcat \
+&& rm -rf /var/lib/apt/lists/*
+
+COPY requirements/common.txt /tmp/common.txt
+COPY requirements/development.txt /tmp/development.txt
+
+RUN pip install -Ur /tmp/development.txt
+
+ENV APP_HOME=/project_django
+
+WORKDIR $APP_HOME
+COPY scripts_docker/start_dev.sh /usr/local/bin/start_dev.sh
+RUN chmod +x /usr/local/bin/start_dev.sh
+# RUN dos2unix /usr/local/bin/start_dev.sh
+
+COPY scripts_docker/postgres-healthy.sh /tmp/postgres-healthy.sh
+COPY manage.py /project_django/
+
+RUN groupadd user && useradd --create-home --home-dir /home/user -g user user
+RUN mkdir -p $APP_HOME && chown user:user $APP_HOME
+
+USER user
+
+# ENTRYPOINT ["bash", "/tmp/postgres-healthy.sh"]
+ENTRYPOINT ["bash", "/tmp/postgres-healthy.sh"]
+CMD python manage.py runserver 0:8000

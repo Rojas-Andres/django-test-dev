@@ -1,0 +1,30 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - echo s3://$BUCKET_NAME_ENVS/$ENVIRONMENT.env
+      - aws s3 cp s3://$BUCKET_NAME_ENVS/$ENVIRONMENT.env ./src/.env
+
+      - pip install boto3==1.35.22
+  build:
+    commands:
+      # Build Docker images
+      - echo "Compilando la aplicación..."
+      - chmod +x build_and_push.sh
+      - ./build_and_push.sh $NAME_SERVICE $CODEBUILD_RESOLVED_SOURCE_VERSION $AWS_ACCOUNT_ID $AWS_DEFAULT_REGION $IMAGE_REPO_NAME
+      - echo build template cloudformation
+      - python change_name.py $ENVIRONMENT
+      - sam build -t template.yml
+      - aws cloudformation package --template-file .aws-sam/build/template.yaml --s3-bucket $BUCKET_NAME --output-template-file packaged-template.yml
+      - aws s3 cp ./packaged-template.yml s3://$BUCKET_NAME/packaged-template.yml
+      - python param_update.py EcrRepositoryDjangoBTI$ENVIRONMENT $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/${IMAGE_REPO_NAME}:${CODEBUILD_RESOLVED_SOURCE_VERSION}-django ${AWS_DEFAULT_REGION}
+
+artifacts:
+  files:
+    - packaged-template.yml
