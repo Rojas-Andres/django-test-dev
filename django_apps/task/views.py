@@ -21,7 +21,10 @@ from django_apps.task.filters import TaskFilter
 from django_apps.task.models import Task, TaskStatus
 from django_apps.utils.views.generic_decorators import GenerateSwagger
 from django_apps.utils.views.generic_views import ListCoreView
-from django_apps.utils.views.mixins import APIErrorsMixin, LoggingRequestViewMixin
+from django_apps.utils.views.mixins import (
+    APIErrorsMixin,
+    LoggingRequestViewMixin,
+)
 from django_apps.utils.views.pagination import CorePagination
 from src.task.adapters.unit_of_work import TaskUnitOfWork
 from src.task.service_layer.services import (
@@ -59,7 +62,9 @@ class TaskCreateView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
         description = serializers.CharField(
             required=False, allow_blank=True, default=""
         )
-        status = serializers.ChoiceField(choices=TaskStatus.values, required=False)
+        status = serializers.ChoiceField(
+            choices=TaskStatus.values, required=False
+        )
         due_date = serializers.DateTimeField(required=False, allow_null=True)
         created_by_name = serializers.CharField(
             max_length=150, required=False, allow_blank=True, default=""
@@ -96,7 +101,9 @@ class TaskDetailView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
     class InputPatchSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=False)
         description = serializers.CharField(required=False, allow_blank=True)
-        status = serializers.ChoiceField(choices=TaskStatus.values, required=False)
+        status = serializers.ChoiceField(
+            choices=TaskStatus.values, required=False
+        )
         due_date = serializers.DateTimeField(required=False, allow_null=True)
         created_by_name = serializers.CharField(
             max_length=150, required=False, allow_blank=True

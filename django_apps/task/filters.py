@@ -13,7 +13,9 @@ class TaskFilter(filters.FilterSet):
     """
 
     status = filters.CharFilter()
-    due_date_after = filters.IsoDateTimeFilter(field_name="due_date", lookup_expr="gte")
+    due_date_after = filters.IsoDateTimeFilter(
+        field_name="due_date", lookup_expr="gte"
+    )
     due_date_before = filters.IsoDateTimeFilter(
         field_name="due_date", lookup_expr="lte"
     )

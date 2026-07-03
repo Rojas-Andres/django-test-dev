@@ -54,7 +54,8 @@ class TaskDjangoRepository(AbstractTaskRepository):
 
     def list(self) -> List[models.Task]:
         return [
-            self.to_domain(instance) for instance in Task.objects.filter(is_active=True)
+            self.to_domain(instance)
+            for instance in Task.objects.filter(is_active=True)
         ]
 
     def to_domain(self, model: Task) -> models.Task:

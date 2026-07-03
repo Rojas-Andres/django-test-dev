@@ -12,7 +12,9 @@ def validate_status(status: Optional[str]) -> None:
         return
     if not TaskStatus.has_value(status):
         allowed = ", ".join(member.value for member in TaskStatus)
-        raise ValueError(f"Invalid status '{status}'. Allowed values: {allowed}.")
+        raise ValueError(
+            f"Invalid status '{status}'. Allowed values: {allowed}."
+        )
 
 
 def validate_due_date(

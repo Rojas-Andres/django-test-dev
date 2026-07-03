@@ -90,7 +90,9 @@ class TaskEndpointsTests(APITestCase):
         self.assertNotIn("Later", titles)
 
     def test_upcoming_excludes_completed(self):
-        task_id = self._create_task(title="Soon", due_date=future(2)).data["id"]
+        task_id = self._create_task(title="Soon", due_date=future(2)).data[
+            "id"
+        ]
         self.client.patch(
             reverse("task_change_status", args=[task_id]),
             {"status": TaskStatus.COMPLETED},
