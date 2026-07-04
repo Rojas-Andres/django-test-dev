@@ -1,0 +1,24 @@
+meta {
+  name: Upcoming Tasks
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{base_url}}/api/task/upcoming/?days=7
+  body: none
+  auth: bearer
+}
+
+params:query {
+  days: 7
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  Tareas activas y no completadas que vencen entre ahora y ahora + N dias.
+  N por defecto = 7 (TASK_UPCOMING_DEFAULT_DAYS); override con ?days=.
+}

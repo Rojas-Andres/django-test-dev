@@ -1,0 +1,21 @@
+meta {
+  name: Patch Task
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{base_url}}/api/task/{{task_id}}/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "title": "Titulo actualizado"
+  }
+}

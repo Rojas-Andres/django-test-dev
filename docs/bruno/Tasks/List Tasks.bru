@@ -1,0 +1,29 @@
+meta {
+  name: List Tasks
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/task/list/?ordering=due_date
+  body: none
+  auth: bearer
+}
+
+params:query {
+  ordering: due_date
+  ~status: pendiente
+  ~search: informe
+  ~due_date_after: 2026-01-01T00:00:00Z
+  ~due_date_before: 2026-12-31T23:59:59Z
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  Lista las tareas activas (excluye las eliminadas logicamente).
+  Parametros opcionales (deshabilitados por defecto): status, search,
+  due_date_after, due_date_before, ordering, limit/page.
+}

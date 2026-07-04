@@ -1,0 +1,21 @@
+meta {
+  name: Task History (audit)
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{base_url}}/api/task/{{task_id}}/history/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  Traza de auditoria de la tarea (simple_history): cada cambio con
+  history_type (Created/Changed/Deleted), history_user (quien) y
+  history_date (cuando). Incluye tareas eliminadas logicamente.
+}

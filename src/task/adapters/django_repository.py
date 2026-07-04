@@ -28,6 +28,7 @@ class TaskDjangoRepository(AbstractTaskRepository):
             description=task.description or "",
             status=task.status or models.TaskStatus.PENDING.value,
             due_date=task.due_date,
+            created_by_id=task.created_by,
             created_by_name=task.created_by_name or "",
         )
         return self.to_domain(instance)
@@ -54,8 +55,7 @@ class TaskDjangoRepository(AbstractTaskRepository):
 
     def list(self) -> List[models.Task]:
         return [
-            self.to_domain(instance)
-            for instance in Task.objects.filter(is_active=True)
+            self.to_domain(instance) for instance in Task.objects.filter(is_active=True)
         ]
 
     def to_domain(self, model: Task) -> models.Task:
@@ -65,6 +65,7 @@ class TaskDjangoRepository(AbstractTaskRepository):
             description=model.description,
             status=model.status,
             due_date=model.due_date,
+            created_by=model.created_by_id,
             created_by_name=model.created_by_name,
             is_active=model.is_active,
             created_at=model.created_at,
@@ -79,6 +80,7 @@ class TaskDjangoRepository(AbstractTaskRepository):
             "description": task.description,
             "status": task.status,
             "due_date": task.due_date,
+            "created_by_id": task.created_by,
             "created_by_name": task.created_by_name,
             "is_active": task.is_active,
             "created_at": task.created_at,

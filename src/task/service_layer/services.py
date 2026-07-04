@@ -26,6 +26,7 @@ class CreateTask:
         description: Optional[str] = None,
         status: Optional[str] = None,
         due_date: Optional[datetime] = None,
+        created_by: Optional[int] = None,
         created_by_name: Optional[str] = None,
     ) -> dict:
         validate_status(status)
@@ -37,6 +38,7 @@ class CreateTask:
                     description=description,
                     status=status or models.TaskStatus.PENDING.value,
                     due_date=due_date,
+                    created_by=created_by,
                     created_by_name=created_by_name,
                 )
             )

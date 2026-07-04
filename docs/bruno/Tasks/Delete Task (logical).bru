@@ -1,0 +1,20 @@
+meta {
+  name: Delete Task (logical)
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{base_url}}/api/task/{{task_id}}/
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+docs {
+  Eliminacion logica: marca is_active=false y rellena deleted_at.
+  La fila permanece y queda registrada en el historial. Devuelve 204.
+}

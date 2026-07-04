@@ -1,0 +1,25 @@
+meta {
+  name: Change Status
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{base_url}}/api/task/{{task_id}}/status/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "status": "completada"
+  }
+}
+
+docs {
+  Cambia solo el estado. Valores permitidos: pendiente, completada, pospuesta.
+}

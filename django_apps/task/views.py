@@ -11,9 +11,9 @@ from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import serializers, status
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.filters import OrderingFilter
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -37,6 +37,21 @@ from src.task.service_layer.services import (
 logger = logging.getLogger(__name__)
 
 
+class AuditUserMixin:
+    """Expose the authenticated user to ``simple_history``.
+
+    ``HistoryRequestMiddleware`` captures the underlying WSGIRequest, whose
+    ``user`` stays anonymous under stateless JWT auth (there is no session).
+    Copying the DRF-authenticated user back onto that request lets
+    ``simple_history`` record ``history_user`` on every save.
+    """
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        if request.user and request.user.is_authenticated:
+            request._request.user = request.user
+
+
 class TaskOutputSerializer(serializers.Serializer):
     """Read representation of a task, shared by every write endpoint."""
 
@@ -45,6 +60,9 @@ class TaskOutputSerializer(serializers.Serializer):
     description = serializers.CharField(allow_blank=True, required=False)
     status = serializers.CharField()
     due_date = serializers.DateTimeField(allow_null=True, required=False)
+    created_by = serializers.IntegerField(
+        source="created_by_id", allow_null=True, required=False
+    )
     created_by_name = serializers.CharField(allow_blank=True, required=False)
     is_active = serializers.BooleanField(required=False)
     created_at = serializers.DateTimeField(required=False)
@@ -52,19 +70,17 @@ class TaskOutputSerializer(serializers.Serializer):
 
 
 @GenerateSwagger(swagger_auto_schema)
-class TaskCreateView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
+class TaskCreateView(AuditUserMixin, LoggingRequestViewMixin, APIErrorsMixin, APIView):
     """Create a new task (POST)."""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     class InputPostSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255)
         description = serializers.CharField(
             required=False, allow_blank=True, default=""
         )
-        status = serializers.ChoiceField(
-            choices=TaskStatus.values, required=False
-        )
+        status = serializers.ChoiceField(choices=TaskStatus.values, required=False)
         due_date = serializers.DateTimeField(required=False, allow_null=True)
         created_by_name = serializers.CharField(
             max_length=150, required=False, allow_blank=True, default=""
@@ -76,18 +92,23 @@ class TaskCreateView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
     def post(self, request):
         input_serializer = self.InputPostSerializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+        data = input_serializer.validated_data
+        # The author is always the authenticated user, never client input.
+        if not data.get("created_by_name"):
+            full_name = f"{request.user.first_name} {request.user.last_name}".strip()
+            data["created_by_name"] = full_name or request.user.email
         _task = CreateTask(uow=TaskUnitOfWork()).create(
-            **input_serializer.validated_data
+            created_by=request.user.id, **data
         )
         output = self.OutputPostSerializer(instance=_task)
         return Response(data=output.data, status=status.HTTP_201_CREATED)
 
 
 @GenerateSwagger(swagger_auto_schema)
-class TaskDetailView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
+class TaskDetailView(AuditUserMixin, LoggingRequestViewMixin, APIErrorsMixin, APIView):
     """Update (PUT/PATCH) or logically delete (DELETE) a single task."""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     class InputPutSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255)
@@ -101,9 +122,7 @@ class TaskDetailView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
     class InputPatchSerializer(serializers.Serializer):
         title = serializers.CharField(max_length=255, required=False)
         description = serializers.CharField(required=False, allow_blank=True)
-        status = serializers.ChoiceField(
-            choices=TaskStatus.values, required=False
-        )
+        status = serializers.ChoiceField(choices=TaskStatus.values, required=False)
         due_date = serializers.DateTimeField(required=False, allow_null=True)
         created_by_name = serializers.CharField(
             max_length=150, required=False, allow_blank=True
@@ -139,10 +158,12 @@ class TaskDetailView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
 
 
 @GenerateSwagger(swagger_auto_schema)
-class TaskChangeStatusView(LoggingRequestViewMixin, APIErrorsMixin, APIView):
+class TaskChangeStatusView(
+    AuditUserMixin, LoggingRequestViewMixin, APIErrorsMixin, APIView
+):
     """Change only the status of a task (PATCH)."""
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     class InputPatchSerializer(serializers.Serializer):
         status = serializers.ChoiceField(choices=TaskStatus.values)
@@ -169,7 +190,7 @@ class TaskListView(APIErrorsMixin, ListCoreView):
     plus ordering via ``ordering``.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     class OutputGetSerializer(TaskOutputSerializer):
         pass
@@ -192,7 +213,7 @@ class TaskUpcomingView(APIErrorsMixin, ListCoreView):
     (7 days) and can be overridden with the ``?days=`` query parameter.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     class OutputGetSerializer(TaskOutputSerializer):
         pass
@@ -225,3 +246,47 @@ class TaskUpcomingView(APIErrorsMixin, ListCoreView):
             .exclude(status=TaskStatus.COMPLETED)
             .order_by("due_date")
         )
+
+
+@GenerateSwagger(swagger_auto_schema)
+class TaskHistoryView(APIErrorsMixin, APIView):
+    """Audit trail of a task (GET).
+
+    Returns every change recorded by ``simple_history`` (create / update /
+    delete), including **who** made it (``history_user``) and **when**
+    (``history_date``). Includes logically deleted tasks.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    class OutputGetSerializer(serializers.Serializer):
+        history_id = serializers.IntegerField()
+        history_date = serializers.DateTimeField()
+        history_type = serializers.CharField()
+        history_user = serializers.EmailField(allow_null=True)
+        title = serializers.CharField()
+        status = serializers.CharField()
+        due_date = serializers.DateTimeField(allow_null=True)
+        is_active = serializers.BooleanField()
+
+    def get(self, request, task_id):
+        if not Task.objects.filter(id=task_id).exists():
+            raise NotFound(f"Task {task_id} not found.")
+        records = Task.historical.filter(id=task_id).order_by("-history_date")
+        data = [
+            {
+                "history_id": record.history_id,
+                "history_date": record.history_date,
+                "history_type": record.get_history_type_display(),
+                "history_user": (
+                    record.history_user.email if record.history_user else None
+                ),
+                "title": record.title,
+                "status": record.status,
+                "due_date": record.due_date,
+                "is_active": record.is_active,
+            }
+            for record in records
+        ]
+        output = self.OutputGetSerializer(instance=data, many=True)
+        return Response(data=output.data, status=status.HTTP_200_OK)

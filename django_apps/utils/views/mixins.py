@@ -78,11 +78,7 @@ class LoggingRequestViewMixin:
         request_data = copy.deepcopy(request.data)
         response_data = copy.deepcopy(response.data)
 
-        obfuscate_sensible_data(
-            sensible_keys=self.sensible_keys, data=request_data
-        )
-        obfuscate_sensible_data(
-            sensible_keys=self.sensible_keys, data=response_data
-        )
+        obfuscate_sensible_data(sensible_keys=self.sensible_keys, data=request_data)
+        obfuscate_sensible_data(sensible_keys=self.sensible_keys, data=response_data)
 
         return super().finalize_response(request, response, *args, **kwargs)

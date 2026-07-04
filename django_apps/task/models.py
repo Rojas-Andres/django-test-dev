@@ -2,6 +2,7 @@
 Models for the task app.
 """
 
+from django.conf import settings
 from django.db import models
 from simple_history.models import HistoricalRecords
 
@@ -32,6 +33,13 @@ class Task(BaseModel):
         default=TaskStatus.PENDING,
     )
     due_date = models.DateTimeField(null=True, blank=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tasks",
+    )
     created_by_name = models.CharField(max_length=150, blank=True)
     historical = HistoricalRecords()
 

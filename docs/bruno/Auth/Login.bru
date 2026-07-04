@@ -1,0 +1,31 @@
+meta {
+  name: Login (obtain JWT)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/auth/token/
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "andres@example.com",
+    "password": "pass1234"
+  }
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("access_token", res.body.access);
+    bru.setEnvVar("refresh_token", res.body.refresh);
+  }
+}
+
+docs {
+  Logs in with email + password and returns `access` / `refresh` tokens.
+  The post-response script stores them in the environment so every other
+  request can use `{{access_token}}` automatically.
+}

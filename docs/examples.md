@@ -8,6 +8,27 @@ ISO 8601 en UTC (ej. `2026-12-31T23:59:00Z`).
 
 Estados permitidos (`status`): `pendiente`, `completada`, `pospuesta`.
 
+**Autenticación:** todos los endpoints `/api/task/...` requieren un token JWT
+en la cabecera `Authorization: Bearer <access>`. Sin token responden `401`.
+
+---
+
+## 0. Login — `POST /api/auth/token/`
+
+Request:
+
+```json
+{ "email": "user@example.com", "password": "secret" }
+```
+
+Response `200 OK`:
+
+```json
+{ "access": "<jwt-access>", "refresh": "<jwt-refresh>" }
+```
+
+Renovación: `POST /api/auth/token/refresh/` con `{ "refresh": "<jwt-refresh>" }`.
+
 ---
 
 ## 1. Crear tarea — `POST /api/task/`
@@ -33,15 +54,18 @@ Response `201 Created`:
   "description": "Informe trimestral Q3",
   "status": "pendiente",
   "due_date": "2026-12-31T23:59:00Z",
-  "created_by_name": "Andres",
+  "created_by": 1,
+  "created_by_name": "Andres Rojas",
   "is_active": true,
   "created_at": "2026-07-03T23:24:10.032896Z",
   "updated_at": "2026-07-03T23:24:10.032915Z"
 }
 ```
 
-Campos: `title` es obligatorio; `description`, `status` (por defecto `pendiente`),
-`due_date` y `created_by_name` son opcionales.
+Campos: `title` es obligatorio; `description`, `status` (por defecto `pendiente`)
+y `due_date` son opcionales. **El autor** (`created_by`) se toma siempre del
+usuario del token, nunca del body; `created_by_name` se autocompleta con el
+nombre/email del usuario si no se envía.
 
 Errores de validacion:
 
@@ -151,3 +175,41 @@ GET /api/task/upcoming/?days=1   # proximas 24 horas
 ```
 
 Response `200 OK`: mismo formato paginado que el listado.
+
+---
+
+## 7. Auditoría / historial — `GET /api/task/{id}/history/`
+
+Devuelve la traza completa registrada por `simple_history`: cada cambio con
+**quién** (`history_user`), **cuándo** (`history_date`) y **tipo**
+(`Created` / `Changed` / `Deleted`). Incluye tareas eliminadas lógicamente.
+Ordenado del más reciente al más antiguo.
+
+Response `200 OK`:
+
+```json
+[
+  {
+    "history_id": 3,
+    "history_date": "2026-07-03T23:54:48.994Z",
+    "history_type": "Changed",
+    "history_user": "editor@example.com",
+    "title": "Escribir informe",
+    "status": "completada",
+    "due_date": "2026-12-31T23:59:00Z",
+    "is_active": true
+  },
+  {
+    "history_id": 1,
+    "history_date": "2026-07-03T23:54:48.824Z",
+    "history_type": "Created",
+    "history_user": "andres@example.com",
+    "title": "Escribir informe",
+    "status": "pendiente",
+    "due_date": "2026-12-31T23:59:00Z",
+    "is_active": true
+  }
+]
+```
+
+Tarea inexistente -> `404`.

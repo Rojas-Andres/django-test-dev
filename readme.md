@@ -67,32 +67,82 @@ Con el servidor en marcha:
 - Redoc: http://localhost:8000/redoc
 - OpenAPI JSON/YAML: http://localhost:8000/swagger.json · http://localhost:8000/swagger.yaml
 
-## Colección Postman
+## Colección Bruno
 
-- Archivo: [`docs/postman_collection.json`](docs/postman_collection.json)
-- Impórtala en Postman (*Import → File*). Incluye la variable `base_url`
-  (`http://localhost:8000` por defecto) y `task_id`.
+La colección de la API está en [`docs/bruno/`](docs/bruno) (cliente
+[Bruno](https://www.usebruno.com/), open source, versionable en git).
+
+- Ábrela en Bruno: *Open Collection* → selecciona la carpeta `docs/bruno/`.
+- Selecciona el entorno **Local** (variable `base_url = http://localhost:8000`).
+- Ejecuta primero **Auth / Login (obtain JWT)**: su script guarda
+  `access_token`/`refresh_token` en el entorno y el resto de requests ya salen
+  autenticados (Bearer). **Create Task** guarda además el `task_id`.
 - Ejemplos de request/response por endpoint: [`docs/examples.md`](docs/examples.md).
+
+## Autenticación (JWT)
+
+La API usa **JWT** (`djangorestframework-simplejwt`). Todos los endpoints de
+tareas requieren estar autenticado; el healthcheck y el login son públicos.
+
+```bash
+# 1) Obtener token (login con email + password)
+curl -X POST http://localhost:8000/api/auth/token/ \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "secret"}'
+# -> { "access": "...", "refresh": "..." }
+
+# 2) Usar el access token en cada petición
+curl http://localhost:8000/api/task/list/ \
+  -H "Authorization: Bearer <access>"
+```
+
+- `POST /api/auth/token/` → devuelve `access` + `refresh`.
+- `POST /api/auth/token/refresh/` → renueva el `access`.
+- Los usuarios se crean con `POST /api/user/` (ya existente).
+- Sin token → **401**.
 
 ## Endpoints
 
-| Método | Ruta | Descripción |
-| --- | --- | --- |
-| POST | `/api/task/` | Crear tarea |
-| GET | `/api/task/list/` | Listar (excluye eliminadas; filtros y orden) |
-| PUT / PATCH | `/api/task/{id}/` | Actualizar (total / parcial) |
-| PATCH | `/api/task/{id}/status/` | Cambiar sólo el estado |
-| DELETE | `/api/task/{id}/` | Eliminación **lógica** |
-| GET | `/api/task/upcoming/` | Tareas próximas a vencer |
+| Método | Ruta | Auth | Descripción |
+| --- | --- | :---: | --- |
+| POST | `/api/auth/token/` | — | Login: obtener access/refresh JWT |
+| POST | `/api/auth/token/refresh/` | — | Renovar access token |
+| POST | `/api/task/` | ✔ | Crear tarea (autor = usuario del token) |
+| GET | `/api/task/list/` | ✔ | Listar (excluye eliminadas; filtros y orden) |
+| PUT / PATCH | `/api/task/{id}/` | ✔ | Actualizar (total / parcial) |
+| PATCH | `/api/task/{id}/status/` | ✔ | Cambiar sólo el estado |
+| DELETE | `/api/task/{id}/` | ✔ | Eliminación **lógica** |
+| GET | `/api/task/upcoming/` | ✔ | Tareas próximas a vencer |
+| GET | `/api/task/{id}/history/` | ✔ | **Auditoría**: quién cambió qué y cuándo |
 
 **Modelo** `Task`: `id`, `title`, `description`, `status`
-(`pendiente` / `completada` / `pospuesta`), `due_date`, `created_by_name`,
-auditoría (`created_at`, `updated_at`) y borrado lógico (`is_active`,
-`deleted_at`, heredados de `BaseModel`).
+(`pendiente` / `completada` / `pospuesta`), `due_date`, `created_by`
+(FK al usuario autor), `created_by_name`, auditoría (`created_at`,
+`updated_at`) y borrado lógico (`is_active`, `deleted_at`, heredados de
+`BaseModel`).
 
 **Validaciones:** `title` obligatorio, `status` dentro de los permitidos y
 `due_date` coherente (no puede estar en el pasado al crear). Los errores se
-devuelven con el código HTTP adecuado (400 / 404) y un payload JSON.
+devuelven con el código HTTP adecuado (400 / 401 / 404) y un payload JSON.
+
+## Auditoría (quién modificó qué)
+
+Cada tarea guarda su autor en `created_by` (FK al usuario). Además, con
+`django-simple-history` se registra automáticamente **el historial completo**
+de cada tarea: creación, cada modificación y el borrado lógico, con el
+**usuario** (`history_user`), la **fecha** (`history_date`) y el **tipo de
+cambio**. Se consulta en:
+
+```bash
+curl http://localhost:8000/api/task/1/history/ -H "Authorization: Bearer <access>"
+```
+
+```jsonc
+[
+  { "history_type": "Changed", "history_user": "editor@example.com", "history_date": "...", "status": "completada", ... },
+  { "history_type": "Created", "history_user": "andres@example.com", "history_date": "...", "status": "pendiente",  ... }
+]
+```
 
 ## Criterio "próximas a vencer"
 

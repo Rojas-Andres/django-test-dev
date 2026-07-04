@@ -20,6 +20,7 @@ class Task:
     description: Optional[str] = None
     status: Optional[str] = None
     due_date: Optional[datetime] = None
+    created_by: Optional[int] = None
     created_by_name: Optional[str] = None
     is_active: Optional[bool] = None
     created_at: Optional[datetime] = None

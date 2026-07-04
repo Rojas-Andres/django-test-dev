@@ -8,6 +8,7 @@ from django_apps.task.views import (
     TaskChangeStatusView,
     TaskCreateView,
     TaskDetailView,
+    TaskHistoryView,
     TaskListView,
     TaskUpcomingView,
 )
@@ -23,5 +24,10 @@ urlpatterns = [
         "<int:task_id>/status/",
         TaskChangeStatusView.as_view(),
         name="task_change_status",
+    ),
+    path(
+        "<int:task_id>/history/",
+        TaskHistoryView.as_view(),
+        name="task_history",
     ),
 ]

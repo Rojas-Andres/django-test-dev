@@ -1,0 +1,24 @@
+meta {
+  name: Update Task (PUT)
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{base_url}}/api/task/{{task_id}}/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "title": "Escribir informe final",
+    "description": "Version definitiva",
+    "status": "pendiente",
+    "due_date": "2026-12-31T23:59:00Z"
+  }
+}
