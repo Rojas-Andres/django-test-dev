@@ -9,8 +9,9 @@ export DOCKER_BUILDKIT=1
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-black: ## black
-	black . --line-length=79 --exclude migrations
+ruff: ## ruff format + lint (autofix)
+	ruff format .
+	ruff check . --fix
 
 docker-login: ## docker login
 	aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.us-east-1.amazonaws.com

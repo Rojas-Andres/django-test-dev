@@ -1,8 +1,8 @@
 default_language_version:
-  python: python3.10
+  python: python3
 default_stages:
-  - commit
-  - push
+  - pre-commit
+  - pre-push
 exclude: >
   (?x)^(
       .*migrations\/.*
@@ -26,11 +26,6 @@ repos:
     - id: check-json
     - id: check-docstring-first
     - id: check-ast
-
-  - repo: https://github.com/charliermarsh/ruff-pre-commit
-    rev: 'v0.0.279'
-    hooks:
-      - id: ruff
 
   - repo: https://github.com/pycqa/pylint
     rev: v3.0.3

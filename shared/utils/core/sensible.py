@@ -31,9 +31,9 @@ def obfuscate_sensible_data(
     if not sensible_keys or not data or isinstance(data, str):
         return
 
-    assert isinstance(sensible_keys, (list, tuple)), (
-        "sensible_keys must be a list or tuple instance."
-    )
+    assert isinstance(
+        sensible_keys, (list, tuple)
+    ), "sensible_keys must be a list or tuple instance."
     assert isinstance(data, (list, dict)), "data must be a list or dict instance."
 
     if isinstance(data, list):

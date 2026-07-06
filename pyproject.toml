@@ -1,0 +1,7 @@
+[tool.ruff]
+line-length = 79
+extend-exclude = ["*/migrations/*"]
+
+[tool.ruff.lint]
+# Enable isort (import sorting) on top of the default rules.
+extend-select = ["I"]
