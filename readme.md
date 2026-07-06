@@ -59,6 +59,36 @@ python manage.py makemigrations     # generar migraciones
 python manage.py test django_apps.task   # ejecutar los tests de la app tasks
 ```
 
+Con Docker: `make test` (o `make test args="django_apps.task"`).
+
+## Tests
+
+La app `task` incluye 15 tests (endpoints, borrado lógico, validaciones,
+autenticación JWT y auditoría con `simple_history`).
+
+```bash
+make test                       # todos los tests dentro del contenedor
+make test args="django_apps.task"
+```
+
+## Evidencias
+
+**Tests (15/15 OK):**
+
+![Tests funcionando](evidence/test_funcionando.png)
+
+**`docker compose` — servicios arriba (postgres, worker/Django, redis):**
+
+![Docker Compose corriendo](evidence/docker_compose_corriendo.png)
+
+**Contenedor PostgreSQL en ejecución (logs):**
+
+![PostgreSQL corriendo](evidence/postgres_corriendo.png)
+
+**Django (worker) sirviendo en `:8000` con `django_project.settings.dev`:**
+
+![Django corriendo](evidence/django_corriendo.png)
+
 ## Documentación de la API (Swagger / OpenAPI)
 
 Con el servidor en marcha:

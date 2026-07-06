@@ -2,46 +2,53 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: ECS Cluster with Fargate and Load Balancer
 
 Parameters:
+  # Environment selector. Drives the SSM parameter paths below
+  # (e.g. /django/dev/... ). Override at deploy time for other environments,
+  # passing the matching /django/<env>/... paths for the SSM-backed values.
   Environment:
-    Description: Description
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: EnvironmentBTI
+    Description: Deployment environment (dev, staging, prod)
+    Type: String
+    Default: dev
+    AllowedValues:
+      - dev
+      - staging
+      - prod
   BucketName:
-    Description: Description
+    Description: SSM path for the S3 bucket name
     Type: AWS::SSM::Parameter::Value<String>
-    Default: BucketNameBTI
+    Default: /django/dev/bucket-name
   StackName:
-    Description: Description
+    Description: SSM path for the stack name
     Type: AWS::SSM::Parameter::Value<String>
-    Default: StackNameBTI
+    Default: /django/dev/stack-name
   VPCId:
-    Description: Description
+    Description: SSM path for the VPC id
     Type: AWS::SSM::Parameter::Value<String>
-    Default: VPCIdBTI
+    Default: /django/dev/vpc-id
   PublicSubnetOne:
-    Description: Description
+    Description: SSM path for the first public subnet
     Type: AWS::SSM::Parameter::Value<String>
-    Default: PublicSubnetOneBTI
+    Default: /django/dev/public-subnet-one
   PublicSubnetTwo:
-    Description: PublicSubnetTwo
+    Description: SSM path for the second public subnet
     Type: AWS::SSM::Parameter::Value<String>
-    Default: PublicSubnetTwoBTI
+    Default: /django/dev/public-subnet-two
   PrivateSubnetOne:
-    Description: Description
+    Description: SSM path for the first private subnet
     Type: AWS::SSM::Parameter::Value<String>
-    Default: PrivateSubnetOneBTI
+    Default: /django/dev/private-subnet-one
   PrivateSubnetTwo:
-    Description: PrivateSubnetTwo
+    Description: SSM path for the second private subnet
     Type: AWS::SSM::Parameter::Value<String>
-    Default: PrivateSubnetTwoBTI
+    Default: /django/dev/private-subnet-two
   ArnCertificateACM:
-    Description: PublicSubnetTwo
+    Description: SSM path for the ACM certificate ARN
     Type: AWS::SSM::Parameter::Value<String>
-    Default: ArnCertificateACMBTI
+    Default: /django/dev/arn-certificate-acm
   EcrRepositoryDjango:
-    Description: Description
+    Description: SSM path for the Django ECR repository
     Type: AWS::SSM::Parameter::Value<String>
-    Default: EcrRepositoryDjangoBTI
+    Default: /django/dev/ecr-repository-django
 
 Resources:
 
