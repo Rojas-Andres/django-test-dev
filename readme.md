@@ -97,6 +97,8 @@ Con el servidor en marcha:
 - Redoc: http://localhost:8000/redoc
 - OpenAPI JSON/YAML: http://localhost:8000/swagger.json · http://localhost:8000/swagger.yaml
 
+![Swagger funcional](evidence/swagger_funcional.png)
+
 ## Colección Bruno
 
 La colección de la API está en [`docs/bruno/`](docs/bruno) (cliente
@@ -108,6 +110,8 @@ La colección de la API está en [`docs/bruno/`](docs/bruno) (cliente
   `access_token`/`refresh_token` en el entorno y el resto de requests ya salen
   autenticados (Bearer). **Create Task** guarda además el `task_id`.
 - Ejemplos de request/response por endpoint: [`docs/examples.md`](docs/examples.md).
+
+![Colección Bruno funcional](evidence/colleccion_bruno_funcional.png)
 
 ## Autenticación (JWT)
 
